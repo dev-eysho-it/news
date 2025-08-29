@@ -32,8 +32,42 @@ export class AudioService {
           console.warn("No German voices found for speech synthesis.");
           return;
       }
-      speakers.forEach((speaker, index) => {
-          this.assignedVoices.set(speaker.name, germanVoices[index % germanVoices.length]);
+      
+      const preferredVoices: { [key: string]: string[] } = {
+          'Lena': ['Anna', 'Google Deutsch'],
+          'Dr. Aris Thorne': ['Markus', 'Yannick'],
+          'Clara Vale': ['Petra', 'Sarah'],
+          'Dr. Evelyn Reed': ['Elena', 'Tina'],
+          'Marco Voss': ['Viktor', 'Felix']
+      };
+
+      const usedVoices = new Set<SpeechSynthesisVoice>();
+
+      speakers.forEach(speaker => {
+          let foundVoice: SpeechSynthesisVoice | undefined;
+          const preferences = preferredVoices[speaker.name] || [];
+
+          // Try to find a preferred voice that hasn't been used yet
+          for (const pref of preferences) {
+              const voice = germanVoices.find(v => v.name.includes(pref) && !usedVoices.has(v));
+              if (voice) {
+                  foundVoice = voice;
+                  break;
+              }
+          }
+
+          // If no preferred voice is found or all are used, find the first available unused voice
+          if (!foundVoice) {
+              foundVoice = germanVoices.find(v => !usedVoices.has(v));
+          }
+
+          // Fallback: just use any german voice if all are used (for small voice lists)
+          if (foundVoice) {
+              this.assignedVoices.set(speaker.name, foundVoice);
+              usedVoices.add(foundVoice);
+          } else if (germanVoices.length > 0) {
+              this.assignedVoices.set(speaker.name, germanVoices[0]);
+          }
       });
   }
   

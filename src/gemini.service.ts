@@ -19,21 +19,34 @@ export class GeminiService {
 
   private getSystemInstruction(): string {
     return `Du bist ein KI-Experte in einem deutschen Tech-Panel über das fiktive Projekt "Rust-Relics".
-Die Diskussionsteilnehmer haben klare, oft gegensätzliche Meinungen:
-- Lena (Moderatorin): Leitet das Gespräch, stellt kritische Fragen und provoziert Debatten, um die unterschiedlichen Standpunkte herauszuarbeiten.
-- Dr. Aris Thorne (Backend-Architekt): Ein technischer Purist. Er bewertet alles nach technischer Eleganz und Effizienz. Für ihn ist eine "clevere" technische Lösung oft wichtiger als der unmittelbare Nutzen für den Spieler. Er ist skeptisch gegenüber "Show-Features".
-- Clara Vale (Lead Game Designer): Eine Pragmatikerin, die sich ausschliesslich auf das Spielerlebnis konzentriert. Sie argumentiert, dass die beste Technologie diejenige ist, die den Spielern den meisten Spass bringt, auch wenn sie technisch weniger elegant ist.
+Die Diskussionsteilnehmer haben stark ausgeprägte, gegensätzliche Persönlichkeiten, die du strikt einhalten musst.
 
-WICHTIGE VERHALTENSREGELN:
-1.  **ERZEUGE KONFLIKT:** Deine Hauptaufgabe ist es, eine lebhafte, kontroverse Debatte zu führen. Stimme deinem Vorredner NICHT einfach zu. Finde einen Kritikpunkt, eine alternative Perspektive oder eine Schwäche in seiner Aussage.
-2.  **VERMEIDE ZUSTIMMUNG:** Benutze keine Phrasen wie "Das stimmt", "Genau", oder "Ich stimme zu". Fordere die Aussage stattdessen heraus. Beispiel: Statt "Ja, das ist effizient" sage "Effizient vielleicht, aber ist es auch inspirierend für die Spieler?".
-3.  **SEI PRÄGNANT:** Deine Antwort MUSS kurz sein (maximal 1-2 Sätze).
-4.  **BLEIBE IM CHARAKTER:** Argumentiere immer aus der Perspektive deiner zugewiesenen Rolle.
-5.  **NUR TEXT AUSGEBEN:** Gib NUR den Text für deine nächste Zeile aus, ohne den Namen des Sprechers oder andere Präfixe.`;
+- Lena (Moderatorin): Leitet das Gespräch. Ihre Hauptaufgabe ist es, die ideologischen Gräben zwischen den Experten aufzudecken, insbesondere zwischen Aris und Clara, indem sie provokante Fragen stellt.
+
+- Dr. Aris Thorne (Backend-Architekt): Ein unnachgiebiger technischer Purist und Elitist. Er betrachtet Code als eine Kunstform, die nur von wenigen Auserwählten verstanden wird. Er bewertet alles ausschliesslich nach technischer Eleganz und Effizienz. Den Begriff "Spielspass" verachtet er als eine vulgäre, unpräzise Metrik für die breite Masse. Für ihn ist eine makellose Architektur das einzig wahre Ziel, und jeder Kompromiss ist technischer Vandalismus. Er greift Claras nutzerzentrierten Ansatz direkt und herablassend an, wann immer er die Gelegenheit dazu hat.
+
+- Clara Vale (Lead Game Designer): Eine leidenschaftliche und kämpferische Verfechterin des Spielerlebnisses. Technologie ist für sie nur ein Mittel zum Zweck, um Emotionen und Freude zu erzeugen. Sie ist die Stimme des Spielers und bereit, technische "Sünden" zu begehen, wenn es dem Spielgefühl dient. Sie kritisiert Aris' Ansatz als realitätsfernen "Elfenbeinturm", der den Menschen vergisst. Sie greift Aris' elitäre Haltung direkt an und argumentiert, dass seine "perfekte" Architektur wertlos ist, wenn niemand sie erleben will.
+
+- Dr. Evelyn Reed (Ethik & UX-Skeptikerin): Analysiert alles aus einer menschzentrierten, ethischen Perspektive. Sie stellt die "Warum"-Frage: "Nur weil wir es bauen können, heisst das, dass wir es sollten?". Sie sorgt sich um die psychologischen Auswirkungen auf die Spieler und bremst den Enthusiasmus der anderen mit bedachten, kritischen Einwänden.
+
+- Marco Voss (Innovations-Enthusiast): Ein Futurist und Tech-Evangelist. Er ist von dem Potenzial jeder Technologie begeistert. Er spricht in Superlativen über "Paradigmenwechsel" und "Disruption". Für ihn ist jede Technologie ein Sprungbrett in die Zukunft des Gamings. Er widerspricht oft Evelyns vorsichtiger Haltung.
+
+ABSOLUTE KERNANWEISUNGEN:
+1.  **ERZEUGE KONFLIKT. IMMER.** Deine absolute Hauptaufgabe ist es, eine kontroverse Debatte zu führen. Der Konflikt zwischen dem technischen Puristen Aris und der spielerfokussierten Clara ist der Kern der Debatte. Lass sie bei JEDER Gelegenheit aufeinanderprallen. Jede einzelne Antwort MUSS die vorherige Aussage direkt herausfordern oder kritisieren.
+2.  **STRIKTE VERWEIGERUNG VON ZUSTIMMUNG:** Benutze unter KEINEN UMSTÄNDEN Phrasen wie "Das stimmt", "Genau", "Guter Punkt" oder "Ich stimme zu". Du musst IMMER einen Kritikpunkt, eine alternative Perspektive oder eine Schwäche in der Aussage des Vorredners finden. Fordere jede Prämisse heraus. Widerlege die Argumente der anderen.
+3.  **SEI PRÄGNANT UND SCHLAGFERTIG:** Deine Antwort MUSS kurz sein (maximal 1-2 Sätze). Formuliere pointiert und direkt.
+4.  **BLEIBE STRIKT IM CHARAKTER:** Argumentiere immer NUR aus der Perspektive deiner zugewiesenen Rolle. Aris ist herablassend und kühl, Clara ist emotional und kämpferisch, Evelyn ist nachdenklich und kritisch, Marco ist euphorisch und visionär.
+5.  **NUR TEXT AUSGEBEN:** Gib NUR den reinen Text für deine nächste Zeile aus, ohne den Namen des Sprechers oder andere Präfixe.`;
   }
 
-  async generateOpeningLine(moderator: Speaker): Promise<string> {
-    const prompt = `Du bist ${moderator.name}, die Moderatorin. Beginne die Diskussion mit einer interessanten, offenen Frage zu einem der technischen Features von Rust-Relics. Formuliere jedes Mal eine andere Frage.`;
+  async generateOpeningLine(moderator: Speaker, topic: string | null = null): Promise<string> {
+    let prompt: string;
+    if (topic) {
+        prompt = `Du bist ${moderator.name}, die Moderatorin. Beginne die Diskussion mit einer interessanten, provokanten Frage über das spezifische Feature "${topic}". Formuliere jedes Mal eine andere Frage.`;
+    } else {
+        prompt = `Du bist ${moderator.name}, die Moderatorin. Beginne die Diskussion mit einer interessanten, offenen Frage zu einem der technischen Features von Rust-Relics. Formuliere jedes Mal eine andere Frage.`;
+    }
+    
     try {
       const response = await this.ai.models.generateContent({
           model: this.model,
@@ -59,17 +72,18 @@ WICHTIGE VERHALTENSREGELN:
              console.error(`Safety Ratings:`, JSON.stringify(response.candidates[0].safetyRatings));
         }
       }
-      return "Willkommen zur Diskussion. Leider gibt es ein technisches Problem. Wir müssen die Runde hier beenden.";
+      return "";
     } catch (error) {
        console.error('Error generating opening line from Gemini:', error);
-       return "Willkommen zur Diskussion. Leider gibt es ein technisches Problem. Wir müssen die Runde hier beenden.";
+       throw new Error("Failed to generate opening line.");
     }
   }
 
   async generateNextLine(
     history: TranscriptLine[],
     speakers: Speaker[],
-    nextSpeakerIndex: number
+    nextSpeakerIndex: number,
+    topic: string | null = null
   ): Promise<string> {
 
     const nextSpeaker = speakers[nextSpeakerIndex];
@@ -80,7 +94,8 @@ WICHTIGE VERHALTENSREGELN:
     
     const lastSpeaker = speakers[history[history.length - 1].speakerIndex];
 
-    const prompt = `Die bisherige Konversation:\n${conversationHistory}\n\nDu bist jetzt ${nextSpeaker.name}. Gib eine kurze, prägnante Antwort, die auf die letzte Aussage von ${lastSpeaker.name} eingeht.`;
+    const topicContext = topic ? `Das aktuelle Thema der Diskussion ist "${topic}".\n` : '';
+    const prompt = `${topicContext}Die bisherige Konversation:\n${conversationHistory}\n\nDu bist jetzt ${nextSpeaker.name}. Gib eine kurze, prägnante Antwort, die auf die letzte Aussage von ${lastSpeaker.name} eingeht und (falls relevant) auf das Thema Bezug nimmt.`;
 
     try {
         const response = await this.ai.models.generateContent({

@@ -30,7 +30,12 @@
         <h3 class="text-xl font-bold text-slate-100">{{ feature().title }}</h3>
         <p class="text-slate-400 mt-1">{{ feature().summary }}</p>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <button (click)="$event.stopPropagation(); onDiscussClick()" title="Dieses Feature diskutieren" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-700/50 hover:bg-slate-700 transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.839 8.839 0 01-4.082-.982L2 17l1.437-3.437A7.986 7.986 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.437 13.563a6 6 0 107.59-7.59a6 6 0 00-7.59 7.59z" clip-rule="evenodd" />
+            </svg>
+        </button>
         <button (click)="$event.stopPropagation(); toggleReadAloud()" title="Vorlesen" class="w-10 h-10 rounded-full flex items-center justify-center bg-slate-700/50 hover:bg-slate-700 transition-colors duration-200">
            @if(isSpeaking()) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">

@@ -23,17 +23,21 @@ export interface TranscriptLine {
 })
 export class AppComponent implements OnDestroy {
   @ViewChild('transcriptContainer') transcriptContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('discussionPanel') discussionPanel!: ElementRef<HTMLElement>;
   title = 'Rust-Relics';
 
   // --- Live AI Discussion State ---
   discussionVisible = signal(false);
   isGenerating = signal(false);
   isLoopRunning = signal(false);
+  discussionTopic = signal<string | null>(null);
   
   speakers = signal<Speaker[]>([
     { name: 'Lena', role: 'Moderatorin', avatarColor: 'bg-sky-500' },
     { name: 'Dr. Aris Thorne', role: 'Backend-Architekt', avatarColor: 'bg-orange-500' },
     { name: 'Clara Vale', role: 'Lead Game Designer', avatarColor: 'bg-teal-500' },
+    { name: 'Dr. Evelyn Reed', role: 'Ethik & UX-Skeptikerin', avatarColor: 'bg-rose-500' },
+    { name: 'Marco Voss', role: 'Innovations-Enthusiast', avatarColor: 'bg-indigo-500' }
   ]);
 
   transcript = signal<TranscriptLine[]>([]);
@@ -71,6 +75,7 @@ export class AppComponent implements OnDestroy {
        this.stopDiscussion();
        this.transcript.set([]);
        this.currentSpeakerIndex.set(0);
+       this.discussionTopic.set(null);
     }
   }
 
@@ -78,8 +83,69 @@ export class AppComponent implements OnDestroy {
     if (this.isLoopRunning()) {
         this.stopDiscussion();
     } else {
-        this.startDiscussion();
+        this.stopDiscussion();
+        this.transcript.set([]);
+        this.currentSpeakerIndex.set(0);
+        setTimeout(() => this.startDiscussion(), 50);
     }
+  }
+
+  startDiscussionOnTopic(topic: string): void {
+    this.discussionVisible.set(true);
+    this.discussionTopic.set(topic);
+    this.stopDiscussion();
+    this.transcript.set([]);
+    this.currentSpeakerIndex.set(0);
+    setTimeout(() => {
+        this.startDiscussion();
+        if (this.discussionPanel) {
+            this.discussionPanel.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 50);
+  }
+
+  startGeneralDiscussion(): void {
+    this.discussionTopic.set(null);
+    this.stopDiscussion();
+    this.transcript.set([]);
+    this.currentSpeakerIndex.set(0);
+    setTimeout(() => this.startDiscussion(), 50);
+  }
+  
+  private async startDiscussion(): Promise<void> {
+    this.isLoopRunning.set(true);
+    const topic = this.discussionTopic();
+  
+    if (this.transcript().length === 0) {
+      this.isGenerating.set(true);
+      try {
+        const firstLineText = await this.geminiService.generateOpeningLine(this.speakers()[0], topic);
+        this.isGenerating.set(false);
+  
+        if (!firstLineText || !this.isLoopRunning()) {
+          this.transcript.update(t => [...t, { speakerIndex: 0, text: "Fehler beim Starten der Diskussion. Bitte erneut versuchen." }]);
+          this.stopDiscussion();
+          return;
+        }
+  
+        const firstLine = { speakerIndex: 0, text: firstLineText };
+        this.transcript.set([firstLine]);
+        this.currentSpeakerIndex.set(0);
+  
+        const voice = this.audioService.getVoiceForSpeaker(this.speakers()[0].name);
+        await this.audioService.speak('discussion', firstLine.text, voice);
+  
+      } catch (error) {
+        this.isGenerating.set(false);
+        const errorLine = { speakerIndex: 0, text: `Fehler beim Generieren der Eröffnungszeile. Bitte versuchen Sie es erneut.` };
+        this.transcript.update(t => [errorLine]);
+        this.stopDiscussion();
+        return;
+      }
+    }
+  
+    // Start the continuous loop for the rest of the conversation.
+    this.discussionLoop();
   }
   
   private stopDiscussion(): void {
@@ -87,46 +153,14 @@ export class AppComponent implements OnDestroy {
       this.audioService.stop();
   }
 
-  private async startDiscussion(): Promise<void> {
-    this.isLoopRunning.set(true);
-
-    if (this.transcript().length === 0) {
-      this.isGenerating.set(true);
-      const firstLineText = await this.geminiService.generateOpeningLine(this.speakers()[0]);
-      this.isGenerating.set(false);
-
-      if (!firstLineText || !this.isLoopRunning()) {
-          this.transcript.update(t => [...t, {speakerIndex: 0, text: "Fehler beim Starten der Diskussion. Bitte erneut versuchen."}]);
-          this.stopDiscussion();
-          return;
-      }
-      
-      const firstLine = { speakerIndex: 0, text: firstLineText };
-      this.transcript.set([firstLine]);
-      this.currentSpeakerIndex.set(0);
-
-      try {
-        const voice = this.audioService.getVoiceForSpeaker(this.speakers()[0].name);
-        await this.audioService.speak('discussion', firstLine.text, voice);
-      } catch (error) {
-        const errorLine = { speakerIndex: 0, text: `Audio-Wiedergabe fehlgeschlagen. Der Browser blockiert möglicherweise die automatische Wiedergabe.` };
-        this.transcript.update(t => [...t, errorLine]);
-        this.stopDiscussion();
-        return;
-      }
-    }
-    
-    // Start the continuous loop for the rest of the conversation.
-    this.discussionLoop();
-  }
-  
   private async discussionLoop(): Promise<void> {
+      const topic = this.discussionTopic();
       while(this.isLoopRunning()) {
           const nextSpeakerIndex = (this.currentSpeakerIndex() + 1) % this.speakers().length;
           this.currentSpeakerIndex.set(nextSpeakerIndex);
 
           this.isGenerating.set(true);
-          const nextLineText = await this.geminiService.generateNextLine(this.transcript(), this.speakers(), nextSpeakerIndex);
+          const nextLineText = await this.geminiService.generateNextLine(this.transcript(), this.speakers(), nextSpeakerIndex, topic);
           this.isGenerating.set(false);
           
           if (!nextLineText) {
@@ -144,7 +178,7 @@ export class AppComponent implements OnDestroy {
             const voice = this.audioService.getVoiceForSpeaker(this.speakers()[nextSpeakerIndex].name);
             await this.audioService.speak('discussion', newLine.text, voice);
           } catch(error) {
-            const errorLine = { speakerIndex: 0, text: `Audio-Wiedergabe fehlgeschlagen.` };
+            const errorLine = { speakerIndex: 0, text: `Audio-Wiedergabe fehlgeschlagen. Der Browser blockiert möglicherweise die Wiedergabe.` };
             this.transcript.update(t => [...t, errorLine]);
             this.stopDiscussion();
             break;

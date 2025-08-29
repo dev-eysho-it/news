@@ -12,19 +12,39 @@
     </header>
 
     <!-- Live AI Discussion Section -->
-    <section class="mb-12 md:mb-16">
+    <section #discussionPanel id="discussion-panel" class="mb-12 md:mb-16">
         <div class="bg-slate-800/50 border border-slate-700 rounded-lg shadow-lg p-6">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-orange-400">Starten Sie die Live-KI-Diskussion</h2>
-                    <p class="text-slate-400 mt-1">Hören Sie, wie unsere KI-Experten die Technologie hinter Rust-Relics live diskutieren.</p>
+                    <h2 class="text-2xl font-bold text-orange-400">
+                      @if (discussionTopic(); as topic) {
+                        Live KI-Diskussion: <span class="text-amber-400">{{ topic }}</span>
+                      } @else {
+                        Starten Sie die Live-KI-Diskussion
+                      }
+                    </h2>
+                    @if(discussionTopic()){
+                      <p class="text-slate-400 mt-1">Hören Sie, wie unsere KI-Experten dieses Feature live diskutieren.</p>
+                    } @else {
+                      <p class="text-slate-400 mt-1">Hören Sie, wie unsere KI-Experten die Technologie hinter Rust-Relics live diskutieren.</p>
+                    }
                 </div>
-                <button (click)="toggleDiscussionPlayer()" class="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M18 3a1 1 0 00-1.447-.894L4 6.434V4a1 1 0 00-2 0v12a1 1 0 002 0v-2.434l12.553 3.328A1 1 0 0018 17V3z" />
-                    </svg>
-                    <span>{{ discussionVisible() ? 'Diskussion schließen' : 'Live-Diskussion starten' }}</span>
-                </button>
+                <div class="flex items-center gap-2">
+                   @if(discussionTopic()){
+                      <button (click)="startGeneralDiscussion()" class="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                           <path d="M10 2a6 6 0 00-6 6c0 1.881 1.12 3.522 2.757 4.942a.5.5 0 01.243.43V18.5a.5.5 0 00.5.5h6a.5.5 0 00.5-.5v-5.128a.5.5 0 01.243-.43C14.88 11.522 16 9.881 16 8a6 6 0 00-6-6zM4 8a4 4 0 014-4h4a4 4 0 010 8h-4a4 4 0 01-4-4z"/>
+                        </svg>
+                        <span>Allgemein</span>
+                      </button>
+                   }
+                  <button (click)="toggleDiscussionPlayer()" class="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M18 3a1 1 0 00-1.447-.894L4 6.434V4a1 1 0 00-2 0v12a1 1 0 002 0v-2.434l12.553 3.328A1 1 0 0018 17V3z" />
+                      </svg>
+                      <span>{{ discussionVisible() ? 'Schließen' : 'Starten' }}</span>
+                  </button>
+                </div>
             </div>
 
             @if (discussionVisible()) {
@@ -41,6 +61,8 @@
                                          [class.ring-sky-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('sky')"
                                          [class.ring-orange-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('orange')"
                                          [class.ring-teal-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('teal')"
+                                         [class.ring-rose-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('rose')"
+                                         [class.ring-indigo-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('indigo')"
                                          >
                                         {{ speaker.name.charAt(0) }}
                                     </div>
@@ -96,7 +118,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       @for (feature of features(); track feature.title) {
-        <app-feature-card [feature]="feature"></app-feature-card>
+        <app-feature-card [feature]="feature" (discuss)="startDiscussionOnTopic($event)"></app-feature-card>
       }
     </div>
 
