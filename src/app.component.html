@@ -1,0 +1,107 @@
+<main class="min-h-screen bg-slate-900 p-4 sm:p-8 md:p-12">
+  <div class="max-w-7xl mx-auto">
+    <header class="text-center mb-12 md:mb-16">
+      <div class="inline-block bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 p-1 rounded-lg shadow-lg shadow-orange-500/20">
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-300 p-2">
+          {{ title }}
+        </h1>
+      </div>
+      <p class="mt-4 text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
+        A technical deep dive into the groundbreaking features that make this project a true world-first.
+      </p>
+    </header>
+
+    <!-- Live AI Discussion Section -->
+    <section class="mb-12 md:mb-16">
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg shadow-lg p-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-orange-400">Starten Sie die Live-KI-Diskussion</h2>
+                    <p class="text-slate-400 mt-1">Hören Sie, wie unsere KI-Experten die Technologie hinter Rust-Relics live diskutieren.</p>
+                </div>
+                <button (click)="toggleDiscussionPlayer()" class="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M18 3a1 1 0 00-1.447-.894L4 6.434V4a1 1 0 00-2 0v12a1 1 0 002 0v-2.434l12.553 3.328A1 1 0 0018 17V3z" />
+                    </svg>
+                    <span>{{ discussionVisible() ? 'Diskussion schließen' : 'Live-Diskussion starten' }}</span>
+                </button>
+            </div>
+
+            @if (discussionVisible()) {
+                <div class="mt-6 border-t border-slate-700 pt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-4">
+                            @for (speaker of speakers(); track speaker.name) {
+                                <div class="flex flex-col items-center gap-1">
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg transition-all duration-300" 
+                                         [class]="speaker.avatarColor" 
+                                         [class.ring-4]="isAudioPlaying() && currentSpeakerIndex() === $index"
+                                         [class.ring-offset-4]="isAudioPlaying() && currentSpeakerIndex() === $index"
+                                         [class.ring-offset-slate-800]="isAudioPlaying() && currentSpeakerIndex() === $index"
+                                         [class.ring-sky-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('sky')"
+                                         [class.ring-orange-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('orange')"
+                                         [class.ring-teal-400]="isAudioPlaying() && currentSpeakerIndex() === $index && speakers()[$index].avatarColor.includes('teal')"
+                                         >
+                                        {{ speaker.name.charAt(0) }}
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <button (click)="toggleDiscussionPlayback()" [disabled]="isGenerating()" class="w-14 h-14 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            @if (!isLoopRunning()) {
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                </svg>
+                            } @else {
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
+                                </svg>
+                            }
+                        </button>
+                    </div>
+                    <div #transcriptContainer class="h-64 bg-slate-900/70 rounded-lg p-4 overflow-y-auto space-y-4">
+                        @for (line of transcript(); track $index) {
+                            @let speaker = speakers()[line.speakerIndex];
+                            <div class="flex gap-3 transition-all duration-300">
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm" [class]="speaker.avatarColor">
+                                    {{ speaker.name.charAt(0) }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-300">{{ speaker.name }} <span class="text-xs text-slate-500 font-medium">{{ speaker.role }}</span></p>
+                                    <p class="text-slate-400">{{ line.text }}</p>
+                                </div>
+                            </div>
+                        }
+                        @if (isGenerating()) {
+                           <div class="flex gap-3 transition-all duration-300 animate-pulse">
+                                @let speaker = speakers()[currentSpeakerIndex()];
+                                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm" [class]="speaker.avatarColor">
+                                    {{ speaker.name.charAt(0) }}
+                                </div>
+                                <div>
+                                     <p class="font-bold text-slate-300">{{ speaker.name }} <span class="text-xs text-slate-500 font-medium">{{ speaker.role }}</span></p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                        <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                        <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      @for (feature of features(); track feature.title) {
+        <app-feature-card [feature]="feature"></app-feature-card>
+      }
+    </div>
+
+    <footer class="text-center mt-16 text-slate-500 text-sm">
+      <p>Project "Rust-Relics" &copy; 2024. All concepts presented are part of an innovative technical architecture.</p>
+    </footer>
+  </div>
+</main>
